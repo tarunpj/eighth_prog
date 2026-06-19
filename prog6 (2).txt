@@ -222,23 +222,61 @@ Lab 7
 
 ansible --version
 gedit host.ini
-  
+[local]
+localhost ansible_connection=local  
 
 ansible all -i host.ini --list-hosts
 ansible all -i host.ini -m ping
 gedit play1.yml
+---
+- name: First Playbook
+  hosts: local
+  connection: local
 
+  tasks:
+    - name: My first task
+      debug:
+        msg: "I am John Snow"
 
 ansible-playbook -i host.ini play1.yml
 mkdir -p library
 cd library
 gedit first_module.py
-  
+  #!/usr/bin/python
+from ansible.module_utils.basic import AnsibleModule
+
+def walk():
+    module_args = dict(name=dict(type='str', required=True))
+    module = AnsibleModule(argument_spec=module_args)
+
+    result = {
+        "changed": False,
+        "message": f"Welcome,{module.params['name']}!"
+    }
+
+    module.exit_json(**result)
+
+if __name__ == "__main__":
+    walk()
 
 library$ cd ..
 chmod +x library/first_module.py
 gedit play2.yml
-  
+ ---
+- name: Test Custom Ansible Module
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Call hello module
+      hello:
+        name: "John Snow"
+      register: result
+
+    - name: Display module output
+      debug:
+        var: result.message 
 
 ansible-playbook -i host.ini play2.yml
 
